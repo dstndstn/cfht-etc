@@ -71,7 +71,8 @@ tt = diet.psfexptime(gain=diet.mp_config['gain'],
                      trans=1.0,
                      seeing=seeing)
 
-exptime = 120.
+#exptime = 120.
+exptime = 144.86
 print('Exptime:', exptime)
 tt.ps.modify_texp(exptime)
 snr = tt.ps.SNR()

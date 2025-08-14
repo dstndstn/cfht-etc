@@ -432,7 +432,9 @@ class psfsnr:
     print('zeropoint with airmass: %.3f' % (self.zpt - self.k*(self.am-1)))
     print('gain: %.3f' % self.gain)
     print('signal / second [ADU]: %.3f' % self.Fe_ADU)
+    print('signal / second [e-]:  %.3f' % (self.Fe_ADU * self.gain))
     print('sky / second [ADU]: %.3f' % self.Se_ADU)
+    print('sky / second [e-] : %.3f' % (self.Se_ADU * self.gain))
     
     # Normalization factor that ensures 2*alpha=FWHM
     self.fac = 2.0**(1./beta)-1.
