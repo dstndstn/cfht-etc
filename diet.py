@@ -534,7 +534,7 @@ class psfexptime:
       self.sky=sky
     else:
       self.sky=skies[background][filter] + d_Se_d_am[filter] * (self.am-1.0) 
-    print('sky:', self.sky)
+    print('sky (including airmass term):', self.sky)
 
     self.fluxormag=fluxormag
     if (fluxormag=='flux'):

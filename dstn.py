@@ -52,8 +52,13 @@ COMMENT   M = m + PHOT_C + PHOT_K*(AIRMASS - 1)
 COMMENT         + PHOT_X*(PHOT_C1 - PHOT_C2 - PHOT_DX)
 
 '''
+#mag = 25.0
+#airmass = 1.351
+#seeing = 0.79
+
 mag = 25.0
-airmass = 1.351
+airmass = 1.3
+seeing = 0.8
 
 print('mag:', mag)
 tt = diet.psfexptime(gain=diet.mp_config['gain'],
@@ -64,7 +69,16 @@ tt = diet.psfexptime(gain=diet.mp_config['gain'],
                      background='dark',
                      am=airmass,
                      trans=1.0,
-                     seeing=0.79)
+                     seeing=seeing)
+
+exptime = 120.
+print('Exptime:', exptime)
+tt.ps.modify_texp(exptime)
+snr = tt.ps.SNR()
+print('SNR:', snr)
+
+# -> creates a "psfsnr" object.
+#   - calls modify_texp(), SNR() to find exptime.
 
 tt = tt()
 print('Exptime', tt)
