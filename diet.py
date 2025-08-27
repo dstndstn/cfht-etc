@@ -13,10 +13,16 @@ n=1.0
 dark_sky = {'uS':0.58,'gS':3.34,'rS':4.17,'iS':8.35,'zS':8.35,
             'u' :0.58,'g' :3.34,'r' :4.17,'i' :8.35,'z' :8.35,
             'CaHK':0.22,
-# Dustin's number
-#'CaHK':0.109,
             'Ha':0.28,'HaOFF':0.28,'OIII':0.22,'OIIIOFF':0.22,'gri':16.0,
-            'Y':120,'J':400,'H':2500,'K':1500,'lowoh1':3.2,'lowoh2':4.6,'ch4on':1100,'ch4off':930,'H2':110,'KCont':160,'BrG':110,'W':360,'CO':110}
+            'Y':120,'J':400,'H':2500,'K':1500,'lowoh1':3.2,'lowoh2':4.6,'ch4on':1100,'ch4off':930,'H2':110,'KCont':160,'BrG':110,'W':360,'CO':110,
+            # medium-band survey
+            'mb1': 0.421,
+            'mb2': 0.474,
+            'mb3': 0.579,
+            'mb4': 0.615,
+            'mb5': 0.652,
+            'mb6': 0.527,
+            }
 #grey_sky = {'uS':2.34,'gS':6.68,'rS':6.26,'iS':8.35,'zS':8.35,'Y':150,'J':500,'H':2500,'K':1165,'lowoh1':2.8,'lowoh2':5.0,'ch4on':710.0,'ch4off':973.0,'h2':120.0,'KCont':120.0,'BrG':120.0}
 grey_sky = {'uS':2.34,'gS':6.68,'rS':6.26,'iS':8.35,'zS':8.35,
             'u' :2.34,'g' :6.68,'r' :6.26,'i' :8.35,'z' :8.35,
@@ -38,7 +44,17 @@ skies = {'dark' : dark_sky, 'grey' : grey_sky, 'bright' : bright_sky}
 zpts = {'uS':25.74,'gS':27.00,'rS':26.50,'iS':26.38,'zS':25.34,
         'u' :25.78,'g' :27.11,'r' :26.74,'i' :26.22,'z' :25.02,
         'CaHK':24.07,'Ha':23.86,'HaOFF':23.90,'OIII':24.19,'OIIIOFF':24.20,'gri':27.95,
-        'Y':25.87,'J':26.06,'H':26.66,'K':26.38,'lowoh1':23.08,'lowoh2':23.38,'ch4on':25.56,'ch4off':25.47,'H2':23.80,'KCont':23.63,'BrG':23.72,'W':25.10,'CO':23.76}
+        'Y':25.87,'J':26.06,'H':26.66,'K':26.38,'lowoh1':23.08,'lowoh2':23.38,'ch4on':25.56,'ch4off':25.47,'H2':23.80,'KCont':23.63,'BrG':23.72,'W':25.10,'CO':23.76,
+
+        # medium-band
+        'mb1': 25.10,
+        'mb2': 25.17,
+        'mb3': 25.25,
+        'mb4': 25.22,
+        'mb5': 25.19,
+        'mb6': 24.86,
+
+        }
 # Extinction per airmass variation
 d_ext_d_am = {'uS':0.35,'gS':0.15,'rS':0.1,'iS':0.04,'zS':0.03,
               'u' :0.35,'g' :0.15,'r' :0.1,'i' :0.04,'z' :0.03,
@@ -49,6 +65,12 @@ d_Se_d_am = {'uS':0.34,'gS':0.34,'rS':2.46,'iS':11.6,'zS':11.9,
              'u' :0.34,'g' :0.34,'r' :2.46,'i' :11.6,'z' :11.9,
              'CaHK':0.02,'Ha':0.16,'HaOFF':0.16,'OIII':0.02,'OIIIOFF':0.02,'gri':14.0,  
              'Y':20,'J':40,'H':180,'K':170,'lowoh1':20,'lowoh2':20,'ch4on':42,'ch4off':42,'H2':13,'KCont':23,'BrG':23,'W':30,'CO':23}
+
+# MB - HACK!
+for mb in ['mb1', 'mb2', 'mb3', 'mb4', 'mb5', 'mb6']:
+    d_ext_d_am[mb] = d_ext_d_am['g']
+    d_Se_d_am[mb] = d_Se_d_am['g']
+
 # Central filter wavelength and bandwidth in nm (EB 02/08/2023)
 # Origin: https://www.cfht.hawaii.edu/Instruments/Imaging/MegaPrime/specsinformation.html
 # and https://www.cfht.hawaii.edu/Instruments/Filters/wircam.html
