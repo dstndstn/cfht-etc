@@ -59,16 +59,18 @@ COMMENT         + PHOT_X*(PHOT_C1 - PHOT_C2 - PHOT_DX)
 mag = 25.0
 airmass = 1.3
 seeing = 0.8
+#gain=diet.mp_config['gain']
+gain = 1.5
 
 print('mag:', mag)
-tt = diet.psfexptime(gain=diet.mp_config['gain'],
-                     snr=5.0,
+tt = diet.psfexptime(snr=5.0,
                      filter='g',
                      mAB=mag,
                      fluxormag='mag',
                      background='dark',
                      am=airmass,
                      trans=1.0,
+                     gain=gain,
                      seeing=seeing)
 
 #exptime = 120.
