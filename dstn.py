@@ -9,6 +9,7 @@
 #		print ('PSF SNR:   %.2f<br>'%ss())
 
 
+#import diet_approx as diet
 import diet
 
 #mAB=27.15,
@@ -57,7 +58,7 @@ COMMENT         + PHOT_X*(PHOT_C1 - PHOT_C2 - PHOT_DX)
 #seeing = 0.79
 
 mag = 25.0
-airmass = 1.3
+airmass = 1.0
 seeing = 0.8
 #gain=diet.mp_config['gain']
 gain = 1.5
@@ -85,3 +86,20 @@ print('SNR:', snr)
 
 tt = tt()
 print('Exptime', tt)
+
+
+for mb in ['g', 'mb1', 'mb2']:
+    print()
+    print('Medium-band', mb)
+
+    tt = diet.psfexptime(snr=5.0,
+                        filter=mb,
+                        mAB=mag,
+                        fluxormag='mag',
+                        background='dark',
+                        am=airmass,
+                        trans=1.0,
+                        gain=gain,
+                        seeing=seeing)
+    tt = tt()
+    print('Exptime: %.1f sec' % tt)

@@ -2,6 +2,10 @@
 
 import numpy as nm
 import mogs
+import numpy as np
+
+import pylab as plt
+plotnum = 1
 
 # Light speed in m/s
 lightspeed = 3e8;
@@ -13,16 +17,10 @@ n=1.0
 dark_sky = {'uS':0.58,'gS':3.34,'rS':4.17,'iS':8.35,'zS':8.35,
             'u' :0.58,'g' :3.34,'r' :4.17,'i' :8.35,'z' :8.35,
             'CaHK':0.22,
+# Dustin's number
+#'CaHK':0.109,
             'Ha':0.28,'HaOFF':0.28,'OIII':0.22,'OIIIOFF':0.22,'gri':16.0,
-            'Y':120,'J':400,'H':2500,'K':1500,'lowoh1':3.2,'lowoh2':4.6,'ch4on':1100,'ch4off':930,'H2':110,'KCont':160,'BrG':110,'W':360,'CO':110,
-            # medium-band survey
-            'mb1': 0.421,
-            'mb2': 0.474,
-            'mb3': 0.579,
-            'mb4': 0.615,
-            'mb5': 0.652,
-            'mb6': 0.527,
-            }
+            'Y':120,'J':400,'H':2500,'K':1500,'lowoh1':3.2,'lowoh2':4.6,'ch4on':1100,'ch4off':930,'H2':110,'KCont':160,'BrG':110,'W':360,'CO':110}
 #grey_sky = {'uS':2.34,'gS':6.68,'rS':6.26,'iS':8.35,'zS':8.35,'Y':150,'J':500,'H':2500,'K':1165,'lowoh1':2.8,'lowoh2':5.0,'ch4on':710.0,'ch4off':973.0,'h2':120.0,'KCont':120.0,'BrG':120.0}
 grey_sky = {'uS':2.34,'gS':6.68,'rS':6.26,'iS':8.35,'zS':8.35,
             'u' :2.34,'g' :6.68,'r' :6.26,'i' :8.35,'z' :8.35,
@@ -44,17 +42,7 @@ skies = {'dark' : dark_sky, 'grey' : grey_sky, 'bright' : bright_sky}
 zpts = {'uS':25.74,'gS':27.00,'rS':26.50,'iS':26.38,'zS':25.34,
         'u' :25.78,'g' :27.11,'r' :26.74,'i' :26.22,'z' :25.02,
         'CaHK':24.07,'Ha':23.86,'HaOFF':23.90,'OIII':24.19,'OIIIOFF':24.20,'gri':27.95,
-        'Y':25.87,'J':26.06,'H':26.66,'K':26.38,'lowoh1':23.08,'lowoh2':23.38,'ch4on':25.56,'ch4off':25.47,'H2':23.80,'KCont':23.63,'BrG':23.72,'W':25.10,'CO':23.76,
-
-        # medium-band
-        'mb1': 25.10,
-        'mb2': 25.17,
-        'mb3': 25.25,
-        'mb4': 25.22,
-        'mb5': 25.19,
-        'mb6': 24.86,
-
-        }
+        'Y':25.87,'J':26.06,'H':26.66,'K':26.38,'lowoh1':23.08,'lowoh2':23.38,'ch4on':25.56,'ch4off':25.47,'H2':23.80,'KCont':23.63,'BrG':23.72,'W':25.10,'CO':23.76}
 # Extinction per airmass variation
 d_ext_d_am = {'uS':0.35,'gS':0.15,'rS':0.1,'iS':0.04,'zS':0.03,
               'u' :0.35,'g' :0.15,'r' :0.1,'i' :0.04,'z' :0.03,
@@ -65,12 +53,6 @@ d_Se_d_am = {'uS':0.34,'gS':0.34,'rS':2.46,'iS':11.6,'zS':11.9,
              'u' :0.34,'g' :0.34,'r' :2.46,'i' :11.6,'z' :11.9,
              'CaHK':0.02,'Ha':0.16,'HaOFF':0.16,'OIII':0.02,'OIIIOFF':0.02,'gri':14.0,  
              'Y':20,'J':40,'H':180,'K':170,'lowoh1':20,'lowoh2':20,'ch4on':42,'ch4off':42,'H2':13,'KCont':23,'BrG':23,'W':30,'CO':23}
-
-# MB - HACK!
-for mb in ['mb1', 'mb2', 'mb3', 'mb4', 'mb5', 'mb6']:
-    d_ext_d_am[mb] = d_ext_d_am['g']
-    d_Se_d_am[mb] = d_Se_d_am['g']
-
 # Central filter wavelength and bandwidth in nm (EB 02/08/2023)
 # Origin: https://www.cfht.hawaii.edu/Instruments/Imaging/MegaPrime/specsinformation.html
 # and https://www.cfht.hawaii.edu/Instruments/Filters/wircam.html
@@ -487,11 +469,21 @@ class psfsnr:
   def moment_derivatives(self,xi,yi):
     npix = nm.size(xi)
     moff = self.M(xi,yi).squeeze()
+
+    global plotnum
+    plt.clf()
+    plt.scatter(xi, yi, c=moff)
+    cb = plt.colorbar()
+    cb.set_label('Moffat value')
+    plt.savefig('plot-%02i.png' % plotnum)
+    plotnum += 1
+
     dmu = nm.ndarray((npix,3),dtype=nm.double)
     ds2 = nm.ndarray((npix,3),dtype=nm.double)
     dmu[:,0] = self.rpix**2 * moff # dmudfs
     dmu[:,1] = self.Ftot_ADU * self.rpix**2 * self.dMdx(xi,yi).squeeze() # dmudxs
     dmu[:,2] = self.Ftot_ADU * self.rpix**2 * self.dMdy(xi,yi).squeeze() # dmudys
+
     ds2[:,0] = self.rpix**2/self.gain * moff #dsigma2dfs
     ds2[:,1] = dmu[:,1] / self.gain # dsigma2dxs
     ds2[:,2] = dmu[:,2] / self.gain # dsigma2dys
@@ -502,15 +494,163 @@ class psfsnr:
     (dmu,ds2) = self.moment_derivatives(xi,yi)
     s2 = self.sigma2pix(xi,yi)
     fish = nm.dot(dmu.T,dmu/s2) + 0.5*nm.dot(ds2.T,ds2/s2**2)
+
+    print('n pix:', len(xi))
+    print('Fisher: moment derivs dmu shape:', dmu.shape, 'ds2 shape', ds2.shape)
+    print('s2 shape:', s2.shape)
+    print('dmu.T dot dmu/s2:', nm.dot(dmu.T, dmu/s2))
+    print('0.5 * ds2.T dot ds2/s2**2:', 0.5 * nm.dot(ds2.T,ds2/s2**2))
+
+    print('dmu:', dmu[:10, :])
+    
+    print('fish:', fish)
+
     return fish
 
   def SNR(self):
+    global plotnum
+
     xi,yi = self.pixel_coordinates()
     fish = self.Fisher_matrix(xi,yi)
+    print('Pixel coordinates:', len(xi), ', fisher', fish)
+
+    plt.clf()
+    plt.plot(xi, yi, '.')
+    plt.savefig('plot-%02i.png' % plotnum)
+    plotnum += 1
+
     cov = nm.linalg.inv(fish)
+    print('cov', cov)
     sig2flux = nm.sqrt(cov[0,0])
+
+
+    print('sig2flux:', sig2flux)
+    print('sqrt(1/fish[0,0]:', 1./nm.sqrt(fish[0,0]))
+
+    (dmu,ds2) = self.moment_derivatives(xi,yi)
+    s2 = self.sigma2pix(xi,yi)
+    fish1 = nm.dot(dmu.T,dmu/s2)
+    fish2 = 0.5*nm.dot(ds2.T,ds2/s2**2)
+    print('fish1', fish1[0,0])
+    print('fish2', fish2[0,0])
+    f1 = fish1[0,0]
+    f2 = fish2[0,0]
+    #S = 1./nm.sqrt(f1 + f2)
+    f1 = nm.sum(dmu[:,0] * dmu[:,0] / s2[:,0])
+    print('Approx f1:', f1)
+
+    moff = self.M(xi,yi).squeeze()
+    dmu0 = self.rpix**2 * moff # dmudfs
+    print('dmu0 shape', dmu0.shape)
+    f1 = nm.sum(dmu0 * dmu0 / s2[:,0])
+    print('Approx f1:', f1)
+
+    print('s2: Stot_ADU/gain:', (self.Stot_ADU/self.gain))
+    print('s2: nccd_ADU**2:', (self.nccd_ADU**2))
+    fterm = (self.Ftot_ADU/self.gain*self.rpix**2*self.M(xi,yi))
+    print('s2: Ftot_ADU/gain*rpix**2*M: range', fterm.min(), 'to', fterm.max())
+    # approx s2:
+    s2x = self.Stot_ADU/self.gain
+    f1 = nm.sum(dmu0 * dmu0 / s2x)
+    S = 1./nm.sqrt(f1)
+    print('Approx f1(w/approx s2):', f1)
+    print('Approx: S=', S)
+
+    print('sum of moff:', nm.sum(moff))
+    # weird, their 'moff' has a sum ~= 1./pixscale**2 !!
+
+    #print('dmu0 range:', dmu0.min(), dmu0.max())
+    #print('Moffat NEA:', 1./(self.rpix**2 * nm.sqrt(nm.sum(moff ** 2))))
+
+    print('sum of dmu0:', nm.sum(dmu0))
+    
+    umoff = moff * self.rpix**2
+    print('Moffat NEA:', 1./nm.sum(umoff**2))
+
+    S = nm.sqrt(s2x) / (self.rpix**2 * nm.sqrt(nm.sum(moff ** 2)))
+    print('Approx: S=', S)
+
+    print('Approx SNR:', self.Ftot_ADU/S)
+
+    # Ftot_ADU = Fe_ADU * texp
+    # Stot_ADU = Se_ADU * texp
+    #    Se_ADU = self.sky / self.gain
+    # Stot_ADU = self.sky * texp / gain
+
+    # s2x = self.sky * texp / gain**2
+    print('s2x:', s2x)
+    s2x = self.sky * self.texp / self.gain**2
+    print('s2x:', s2x)
+
+    print('real SNR:', self.Ftot_ADU/S)
+
+    print('PSF norm:', nm.sqrt(nm.sum(dmu0 ** 2)))
+
+    npixlin = int(nm.ceil(self.psfaperture/self.rpix))
+    xpix,ypix = np.meshgrid(np.arange(-npixlin, npixlin+1),
+                            np.arange(-npixlin, npixlin+1))
+    umoff = self.M(xpix * self.rpix, ypix * self.rpix)
+    umoff /= np.sum(umoff)
+    print('PSF (umoff) norm:', nm.sqrt(nm.sum(umoff ** 2)))
+
+    # fwhm in arcsec
+    seeing = self.alpha * 2.0
+    # fwhm in pixels
+    seeing_pix = seeing / self.rpix
+    # psf sigma in pixels
+    sig_pix = seeing_pix / 2.35
+    #xpix = xi / self.rpix
+    #ypix = yi / self.rpix
+    G = nm.exp(-0.5 * (xpix**2 + ypix**2) / sig_pix**2)
+    G /= nm.sum(G)
+    print('PSF norm for Gaussian:', nm.sqrt(nm.sum(G ** 2)))
+    print('Gaussian NEA:', 1./nm.sum(G**2))
+
+    plt.clf()
+    mx = max(umoff.max(), G.max())
+    ima = dict(interpolation='nearest', origin='lower', vmin=0, vmax=mx)
+    plt.subplot(2,2,1)
+    plt.imshow(umoff, **ima)
+    plt.title('Moffat')
+    plt.subplot(2,2,2)
+    plt.imshow(G, **ima)
+    plt.title('Gaussian')
+    ima = dict(interpolation='nearest', origin='lower', vmin=np.log10(mx) - 3, vmax=np.log10(mx))
+    plt.subplot(2,2,3)
+    plt.imshow(np.log10(np.maximum(umoff, 1e-10)), **ima)
+    plt.title('Moffat (log)')
+    plt.subplot(2,2,4)
+    plt.imshow(np.log10(np.maximum(G, 1e-10)), **ima)
+    plt.title('Gaussian (log)')
+    plt.savefig('plot-%02i.png' % plotnum)
+    plotnum += 1
+
+    #snr = self.Fe_ADU * self.texp * (self.rpix**2 * nm.sqrt(nm.sum(moff ** 2))) / nm.sqrt(s2x)
+    #snr = self.Fe_ADU * self.texp * nm.sqrt(nm.sum(dmu0 ** 2)) / nm.sqrt(s2x)
+    #snr = self.Fe_ADU * self.texp * nm.sqrt(nm.sum(dmu0 ** 2)) / nm.sqrt(self.sky * self.texp) * self.gain
+    snr = self.Fe_ADU * self.gain * self.texp * nm.sqrt(nm.sum(dmu0 ** 2)) / nm.sqrt(self.sky * self.texp)
+    snr_g = self.Fe_ADU * self.gain * self.texp * nm.sqrt(nm.sum(G ** 2)) / nm.sqrt(self.sky * self.texp)
+    print('snr:', snr)
+    print('snr(Gaussian):', snr_g)
+
+    # approx s2y: including "nccd" term (~dark current??)
+    # the units on this make *no* sense
+    s2y = self.Stot_ADU/self.gain + self.nccd_ADU**2
+    # Stot_ADU = self.sky * texp / gain
+    print('s2y:', s2y)
+    #snr = self.Fe_ADU * self.texp * nm.sqrt(nm.sum(dmu0 ** 2)) / nm.sqrt(s2y)
+    snr_2 = self.Fe_ADU * self.texp * nm.sqrt(nm.sum(dmu0 ** 2)) / nm.sqrt(self.sky * self.texp / self.gain**2 + self.nccd_ADU**2)
+    print('snr_2:', snr_2)
+    snr_2g = self.Fe_ADU * self.texp * nm.sqrt(nm.sum(G ** 2)) / nm.sqrt(self.sky * self.texp / self.gain**2 + self.nccd_ADU**2)
+
+    f1 = nm.sum(dmu0 * dmu0) / s2x
+    S = 1./nm.sqrt(f1)
+    
     print('t_exp', self.texp, 'Ftot_ADU:', self.Ftot_ADU, 'sig2flux:', sig2flux, '-> SNR', self.Ftot_ADU/sig2flux)
-    return self.Ftot_ADU/sig2flux
+    #return self.Ftot_ADU/sig2flux
+    #return self.Ftot_ADU/S
+    #return snr_g
+    return snr_2
 
   def pixel_coordinates(self):
     # First compute the number of pixels around the source center, within a large aperture
@@ -523,6 +663,7 @@ class psfsnr:
     ys_int = nm.floor(self.ys/self.rpix)*self.rpix
     xi = nm.kron(tmp+xs_int,ones.T) # 2D maps of pixel center coordinates, around xs_int
     yi = (nm.kron(tmp+ys_int,ones.T)).T
+    print('pixel_coordinates: rpix=%f, npixlin=%i, psfaperture=%f' % (self.rpix, npixlin, self.psfaperture))
     dist = ( (xi-self.xs)**2+(yi-self.ys)**2 ) < self.psfaperture**2
     ou = nm.argwhere(dist.flatten())
     xi = xi.flatten()[ou]
