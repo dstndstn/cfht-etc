@@ -57,7 +57,7 @@ COMMENT         + PHOT_X*(PHOT_C1 - PHOT_C2 - PHOT_DX)
 #seeing = 0.79
 
 mag = 25.0
-airmass = 1.3
+airmass = 1.0
 seeing = 0.8
 #gain=diet.mp_config['gain']
 gain = 1.5
