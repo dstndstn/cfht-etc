@@ -11,11 +11,17 @@
 
 #import diet_approx as diet
 import diet
-
+import numpy as np
+from scipy.optimize import brentq
 #mAB=27.15,
 #fluxormag='mag',
 
                      #filter='CaHK',
+
+print('mag', diet.flux2mag(1.66e-16, 'g'))
+print('mag', diet.flux2mag(1.66e-16, 'mb1'))
+print('mag', diet.flux2mag(0.96e-16, 'mb5'))
+sys.exit(0)
 
 
 if False:
@@ -63,6 +69,52 @@ seeing = 0.8
 #gain=diet.mp_config['gain']
 gain = 1.5
 
+def obj(m):
+    # sky in e-/s
+    sky = skyadu / exptime * gain
+    print('sky rate:', sky, 'e-/sec')
+    tt = diet.psfexptime(snr=5.0,
+                        filter='g',
+                        sky=sky,
+                        mAB=m,
+                        fluxormag='mag',
+                        background='dark',
+                        am=airmass,
+                        trans=1.0,
+                        gain=gain,
+                        seeing=seeing)
+    tt = tt()
+    return tt - exptime
+
+if False:
+    # expnum 2891510
+    airmass, skyadu, exptime, seeing = 1.1, 363., 120, 0.74
+    
+    m = brentq(obj, 20., 30.)
+    print('Mag: %.2f' % m)
+    sys.exit(0)
+
+    for mb in ['mb1', 'mb2']:
+        print()
+        print('---------------------------------')
+        print('Medium-band', mb)
+        print('---------------------------------')
+        m = brentq(obj, 20., 30.)
+        print('Mag: %.2f' % m)
+
+tt = diet.psfexptime(snr=5.0,
+                     filter='g',
+                     mAB=mag,
+                     fluxormag='mag',
+                     background='dark',
+                     am=airmass,
+                     trans=1.0,
+                     gain=gain,
+                     seeing=seeing)
+tt = tt()
+
+
+
 print('mag:', mag)
 tt = diet.psfexptime(snr=5.0,
                      filter='g',
@@ -103,3 +155,55 @@ for mb in ['g', 'mb1', 'mb2']:
                         seeing=seeing)
     tt = tt()
     print('Exptime: %.1f sec' % tt)
+
+
+
+n_splits = 4.
+
+for mb in ['g', 'mb1', 'mb2']:
+    print()
+    print('Medium-band', mb)
+
+    tt = diet.psfexptime(snr=5.0 / np.sqrt(n_splits),
+                        filter=mb,
+                        mAB=mag,
+                        fluxormag='mag',
+                        background='dark',
+                        am=airmass,
+                        trans=1.0,
+                        gain=gain,
+                        seeing=seeing)
+    tt = tt()
+    print('Exptime: %.1f sec per split' % tt)
+    print('Exptime: %.1f sec total' % (tt * n_splits))
+    
+
+
+
+print('---------------------------------')
+
+def obj(m):
+    tt = diet.psfexptime(snr=5.0 / np.sqrt(n_splits),
+                        filter=mb,
+                        mAB=m,
+                        fluxormag='mag',
+                        background='dark',
+                        am=airmass,
+                        trans=1.0,
+                        gain=gain,
+                        seeing=seeing)
+    tt = tt()
+    # 150 nights each for MB1 and MB2, including overheads
+    #return tt - 98.
+    # 175 nights each
+    return tt - 121.
+
+for mb in ['mb1', 'mb2']:
+    print()
+    print('---------------------------------')
+    print('Medium-band', mb)
+    print('---------------------------------')
+
+    m = brentq(obj, 20., 30.)
+    print('Mag: %.2f' % m)
+    

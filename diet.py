@@ -1,6 +1,7 @@
 # Joint effort of S. PRUNET, P. FOUQUE and B. MAHONEY
 
 import numpy as nm
+import numpy as np
 import mogs
 
 # Light speed in m/s
@@ -81,11 +82,20 @@ for mb in ['mb1', 'mb2', 'mb3', 'mb4', 'mb5', 'mb6']:
 filter_lambda = {'uS': 375.0, 'gS': 487.0, 'rS': 630.0, 'iS': 770.0, 'zS': 900.0,
                  'u': 355.0, 'g': 475.0, 'r': 640.0, 'i': 776.0, 'z': 925.0,
         'CaHK': 395.1, 'Ha': 659.0, 'HaOFF': 671.8, 'OIII': 500.6, 'OIIIOFF': 510.5, 'gri': 600.0,
-        'Y': 1035.0, 'J': 1253.0, 'H': 1631.0, 'K': 2146.0, 'lowoh1': 1061.0, 'lowoh2': 1187.0, 'ch4on': 1690.0, 'ch4off': 1580.0, 'H2': 2122.0, 'KCont': 2218.0, 'BrG': 2166.0, 'W': 1543.0, 'CO': 2320.0}
+                 'Y': 1035.0, 'J': 1253.0, 'H': 1631.0, 'K': 2146.0, 'lowoh1': 1061.0, 'lowoh2': 1187.0, 'ch4on': 1690.0, 'ch4off': 1580.0, 'H2': 2122.0, 'KCont': 2218.0, 'BrG': 2166.0, 'W': 1543.0, 'CO': 2320.0,
+
+                 'mb1': 411.0,
+                 'mb5': 517.0,
+                 }
 filter_dlambda = {'uS': 66.0, 'gS': 143.0, 'rS': 124.0, 'iS': 159.0, 'zS': 87.0,
         'u': 52.0, 'g': 154.0, 'r': 148.0, 'i': 155.0, 'z': 65.0,
         'CaHK': 9.6, 'Ha': 10.4, 'HaOFF': 10.7, 'OIII': 9.9, 'OIIIOFF': 9.5, 'gri': 400.0,
-        'Y': 100.0, 'J': 88.0, 'H': 99.0, 'K': 98.0, 'lowoh1': 10.0, 'lowoh2': 10.0, 'ch4on': 100.0, 'ch4off': 100.0, 'H2': 32.0, 'KCont': 33.0, 'BrG': 30.0, 'W': 88.4, 'CO': 40.0}
+                  'Y': 100.0, 'J': 88.0, 'H': 99.0, 'K': 98.0, 'lowoh1': 10.0, 'lowoh2': 10.0, 'ch4on': 100.0, 'ch4off': 100.0, 'H2': 32.0, 'KCont': 33.0, 'BrG': 30.0, 'W': 88.4, 'CO': 40.0,
+                  #
+                  'mb1': 25.0,
+                  'mb5': 25.0,
+                  }
+
 
 mp_config = {'rpix':0.187,'nccd':5,'gain':1.6,'saturation':65535.0}
 #wc_config = {'rpix':0.307,'nccd':30,'gain':3.7,'saturation':32767.0}
@@ -587,7 +597,10 @@ class psfexptime:
 
   def exptime_compute(self):
     import scipy.optimize as so
-    return so.brentq(self.snrdiff,self.tmin,self.tmax)
+    t = so.brentq(self.snrdiff,self.tmin,self.tmax)
+    print('Pixel stddev due to sky       : %.1f ADU' % (np.sqrt(self.ps.Stot_ADU / self.ps.gain)))
+    print('Pixel stddev due to read-noise: %.1f ADU' % (self.ps.nccd_ADU))
+    return t
 
 class galsnr:
 
