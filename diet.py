@@ -519,7 +519,7 @@ class psfsnr:
     fish = self.Fisher_matrix(xi,yi)
     cov = nm.linalg.inv(fish)
     sig2flux = nm.sqrt(cov[0,0])
-    print('t_exp', self.texp, 'Ftot_ADU:', self.Ftot_ADU, 'sig2flux:', sig2flux, '-> SNR', self.Ftot_ADU/sig2flux)
+    #print('t_exp', self.texp, 'Ftot_ADU:', self.Ftot_ADU, 'sig2flux:', sig2flux, '-> SNR', self.Ftot_ADU/sig2flux)
     return self.Ftot_ADU/sig2flux
 
   def pixel_coordinates(self):
