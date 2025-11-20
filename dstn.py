@@ -18,10 +18,10 @@ from scipy.optimize import brentq
 
                      #filter='CaHK',
 
-print('mag', diet.flux2mag(1.66e-16, 'g'))
-print('mag', diet.flux2mag(1.66e-16, 'mb1'))
-print('mag', diet.flux2mag(0.96e-16, 'mb5'))
-sys.exit(0)
+# print('mag', diet.flux2mag(1.66e-16, 'g'))
+# print('mag', diet.flux2mag(1.66e-16, 'mb1'))
+# print('mag', diet.flux2mag(0.96e-16, 'mb5'))
+# sys.exit(0)
 
 
 if False:
@@ -62,34 +62,36 @@ COMMENT         + PHOT_X*(PHOT_C1 - PHOT_C2 - PHOT_DX)
 #mag = 25.0
 #airmass = 1.351
 #seeing = 0.79
+# Jean-Charles quoted this value
+#gain = 1.5
 
 mag = 25.0
 airmass = 1.0
 seeing = 0.8
-#gain=diet.mp_config['gain']
-gain = 1.5
+gain=diet.mp_config['gain']
 
-def obj(m):
-    # sky in e-/s
-    sky = skyadu / exptime * gain
-    print('sky rate:', sky, 'e-/sec')
-    tt = diet.psfexptime(snr=5.0,
-                        filter='g',
-                        sky=sky,
-                        mAB=m,
-                        fluxormag='mag',
-                        background='dark',
-                        am=airmass,
-                        trans=1.0,
-                        gain=gain,
-                        seeing=seeing)
-    tt = tt()
-    return tt - exptime
 
 if False:
     # expnum 2891510
     airmass, skyadu, exptime, seeing = 1.1, 363., 120, 0.74
-    
+
+    def obj(m):
+        # sky in e-/s
+        sky = skyadu / exptime * gain
+        print('sky rate:', sky, 'e-/sec')
+        tt = diet.psfexptime(snr=5.0,
+                            filter='g',
+                            sky=sky,
+                            mAB=m,
+                            fluxormag='mag',
+                            background='dark',
+                            am=airmass,
+                            trans=1.0,
+                            gain=gain,
+                            seeing=seeing)
+        tt = tt()
+        return tt - exptime
+
     m = brentq(obj, 20., 30.)
     print('Mag: %.2f' % m)
     sys.exit(0)
@@ -102,59 +104,57 @@ if False:
         m = brentq(obj, 20., 30.)
         print('Mag: %.2f' % m)
 
-tt = diet.psfexptime(snr=5.0,
-                     filter='g',
-                     mAB=mag,
-                     fluxormag='mag',
-                     background='dark',
-                     am=airmass,
-                     trans=1.0,
-                     gain=gain,
-                     seeing=seeing)
-tt = tt()
-
-
-
-print('mag:', mag)
-tt = diet.psfexptime(snr=5.0,
-                     filter='g',
-                     mAB=mag,
-                     fluxormag='mag',
-                     background='dark',
-                     am=airmass,
-                     trans=1.0,
-                     gain=gain,
-                     seeing=seeing)
-
-#exptime = 120.
-exptime = 144.86
-print('Exptime:', exptime)
-tt.ps.modify_texp(exptime)
-snr = tt.ps.SNR()
-print('SNR:', snr)
-
-# -> creates a "psfsnr" object.
-#   - calls modify_texp(), SNR() to find exptime.
-
-tt = tt()
-print('Exptime', tt)
-
-
-for mb in ['g', 'mb1', 'mb2']:
-    print()
-    print('Medium-band', mb)
-
+if False:
     tt = diet.psfexptime(snr=5.0,
-                        filter=mb,
-                        mAB=mag,
-                        fluxormag='mag',
-                        background='dark',
-                        am=airmass,
-                        trans=1.0,
-                        gain=gain,
-                        seeing=seeing)
+                         filter='g',
+                         mAB=mag,
+                         fluxormag='mag',
+                         background='dark',
+                         am=airmass,
+                         trans=1.0,
+                         gain=gain,
+                         seeing=seeing)
     tt = tt()
-    print('Exptime: %.1f sec' % tt)
+    
+    print('mag:', mag)
+    tt = diet.psfexptime(snr=5.0,
+                         filter='g',
+                         mAB=mag,
+                         fluxormag='mag',
+                         background='dark',
+                         am=airmass,
+                         trans=1.0,
+                         gain=gain,
+                         seeing=seeing)
+    
+    #exptime = 120.
+    exptime = 144.86
+    print('Exptime:', exptime)
+    tt.ps.modify_texp(exptime)
+    snr = tt.ps.SNR()
+    print('SNR:', snr)
+    # -> creates a "psfsnr" object.
+    #   - calls modify_texp(), SNR() to find exptime.
+    tt = tt()
+    print('Exptime', tt)
+
+
+if False:
+    for mb in ['g', 'mb1', 'mb2']:
+        print()
+        print('Medium-band', mb)
+    
+        tt = diet.psfexptime(snr=5.0,
+                            filter=mb,
+                            mAB=mag,
+                            fluxormag='mag',
+                            background='dark',
+                            am=airmass,
+                            trans=1.0,
+                            gain=gain,
+                            seeing=seeing)
+        tt = tt()
+        print('Exptime: %.1f sec' % tt)
 
 
 
@@ -176,34 +176,42 @@ for mb in ['g', 'mb1', 'mb2']:
     tt = tt()
     print('Exptime: %.1f sec per split' % tt)
     print('Exptime: %.1f sec total' % (tt * n_splits))
-    
 
+    #
+    overhead = 40.
+    # area -> number of tiles for CFHT (area = almost exactly 1.0 sq deg)
+    area = 4200.
+    num_tiles = area
+    t_total = (tt + overhead) * n_splits * num_tiles
+    print('Total time required for %.1f sq deg, including overheads: %.1f hours (%.1f 5-hours nights)' %
+          (area, t_total / 3600., t_total / (3600. * 5.)))
 
-
-print('---------------------------------')
-
-def obj(m):
-    tt = diet.psfexptime(snr=5.0 / np.sqrt(n_splits),
-                        filter=mb,
-                        mAB=m,
-                        fluxormag='mag',
-                        background='dark',
-                        am=airmass,
-                        trans=1.0,
-                        gain=gain,
-                        seeing=seeing)
-    tt = tt()
-    # 150 nights each for MB1 and MB2, including overheads
-    #return tt - 98.
-    # 175 nights each
-    return tt - 121.
-
-for mb in ['mb1', 'mb2']:
-    print()
-    print('---------------------------------')
-    print('Medium-band', mb)
-    print('---------------------------------')
-
-    m = brentq(obj, 20., 30.)
-    print('Mag: %.2f' % m)
-    
+# What if we had fixed number of nights & area, what depth could we get?
+# 
+# print('---------------------------------')
+# 
+# def obj(m):
+#     tt = diet.psfexptime(snr=5.0 / np.sqrt(n_splits),
+#                         filter=mb,
+#                         mAB=m,
+#                         fluxormag='mag',
+#                         background='dark',
+#                         am=airmass,
+#                         trans=1.0,
+#                         gain=gain,
+#                         seeing=seeing)
+#     tt = tt()
+#     # 150 nights each for MB1 and MB2, including overheads
+#     #return tt - 98.
+#     # 175 nights each
+#     return tt - 121.
+# 
+# for mb in ['mb1', 'mb2']:
+#     print()
+#     print('---------------------------------')
+#     print('Medium-band', mb)
+#     print('---------------------------------')
+# 
+#     m = brentq(obj, 20., 30.)
+#     print('Mag: %.2f' % m)
+#     
