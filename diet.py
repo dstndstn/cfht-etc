@@ -420,7 +420,7 @@ class exptime:
 
 class psfsnr:
 
-  def __init__(self,mAB=24.9,fluxormag='mag',filter='r',am=1.2,trans=1.0,seeing=0.69,beta=3.0,background='dark',nccd=5.,texp=3600.,rpix=0.187,gain=1.6,zpt=None,sky=None,xs=0,ys=0):
+  def __init__(self,mAB=24.9,fluxormag='mag',filter='r',am=1.2,trans=1.0,seeing=0.69,beta=3.0,background='dark',nccd=5.,texp=3600.,rpix=0.187,gain=1.6,zpt=None,sky=None,xs=0,ys=0, verbose=False):
     
     self.filter=filter
     self.background=background
@@ -460,13 +460,14 @@ class psfsnr:
     self.Se_ADU = self.sky / self.gain # in ADU/s 
     self.Stot_ADU = self.Se_ADU * self.texp
 
-    print('zeropoint: %.3f' % self.zpt)
-    print('zeropoint with airmass: %.3f' % (self.zpt - self.k*(self.am-1)))
-    print('gain: %.3f' % self.gain)
-    print('signal / second [ADU]: %.3f' % self.Fe_ADU)
-    print('signal / second [e-]:  %.3f' % (self.Fe_ADU * self.gain))
-    print('sky / second [ADU]: %.3f' % self.Se_ADU)
-    print('sky / second [e-] : %.3f' % (self.Se_ADU * self.gain))
+    if verbose:
+      print('zeropoint: %.3f' % self.zpt)
+      print('zeropoint with airmass: %.3f' % (self.zpt - self.k*(self.am-1)))
+      print('gain: %.3f' % self.gain)
+      print('signal / second [ADU]: %.3f' % self.Fe_ADU)
+      print('signal / second [e-]:  %.3f' % (self.Fe_ADU * self.gain))
+      print('sky / second [ADU]: %.3f' % self.Se_ADU)
+      print('sky / second [e-] : %.3f' % (self.Se_ADU * self.gain))
     
     # Normalization factor that ensures 2*alpha=FWHM
     self.fac = 2.0**(1./beta)-1.
@@ -568,7 +569,7 @@ class psfexptime:
       self.sky=sky
     else:
       self.sky=skies[background][filter] + d_Se_d_am[filter] * (self.am-1.0) 
-    print('sky (including airmass term):', self.sky)
+    #print('sky (including airmass term):', self.sky)
 
     self.fluxormag=fluxormag
     if (fluxormag=='flux'):
@@ -583,7 +584,7 @@ class psfexptime:
     texp_aper = tt()[0]
     self.tmin = texp_aper/3.
     self.tmax = texp_aper*3.
-    print('Aperture photom exposure time:', texp_aper)
+    #print('Aperture photom exposure time:', texp_aper)
     # Initiate psfsnr instance
     self.ps=psfsnr(self.mAB,self.fluxormag,self.filter,self.am,self.trans,self.seeing,self.beta,self.background,self.nccd,texp_aper,self.rpix,self.gain,zpt=self.zpt,sky=self.sky)
     return
@@ -598,8 +599,8 @@ class psfexptime:
   def exptime_compute(self):
     import scipy.optimize as so
     t = so.brentq(self.snrdiff,self.tmin,self.tmax)
-    print('Pixel stddev due to sky       : %.1f ADU' % (np.sqrt(self.ps.Stot_ADU / self.ps.gain)))
-    print('Pixel stddev due to read-noise: %.1f ADU' % (self.ps.nccd_ADU))
+    #print('Pixel stddev due to sky       : %.1f ADU' % (np.sqrt(self.ps.Stot_ADU / self.ps.gain)))
+    #print('Pixel stddev due to read-noise: %.1f ADU' % (self.ps.nccd_ADU))
     return t
 
 class galsnr:
